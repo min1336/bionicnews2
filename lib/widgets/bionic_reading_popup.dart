@@ -73,7 +73,14 @@ class _BionicReadingPopupState extends State<BionicReadingPopup> {
   }
 
   void _restart() {
-    _loadArticleContent();
+    setState(() {
+      // 스크래핑을 다시 하지 않고, 인덱스와 상태만 초기화
+      _currentIndex = 0;
+      _isFinished = false;
+      _isPlaying = true;
+      // 타이머만 다시 시작
+      _startTimer();
+    });
   }
 
   void _togglePlayPause() {
