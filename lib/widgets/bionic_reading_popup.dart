@@ -1,8 +1,9 @@
 import 'dart:async';
+
+import 'package:bionic_news/models/news_article.dart';
+import 'package:bionic_news/services/bionic_reading_service.dart';
+import 'package:bionic_news/services/news_scraper_service.dart';
 import 'package:flutter/material.dart';
-import '../models/news_article.dart';
-import '../services/bionic_reading_service.dart';
-import '../services/news_scraper_service.dart'; // 스크래퍼 서비스 import
 
 class BionicReadingPopup extends StatefulWidget {
   final NewsArticle article;
@@ -20,7 +21,6 @@ class _BionicReadingPopupState extends State<BionicReadingPopup> {
   bool _isPlaying = true;
   int _wpm = 450;
   bool _isFinished = false;
-  String _articleContent = '';
   bool _isLoading = true;
   final _scraperService = NewsScraperService();
 
@@ -38,10 +38,12 @@ class _BionicReadingPopupState extends State<BionicReadingPopup> {
       _isPlaying = true;
     });
     // 네이버 뉴스 링크는 content 필드에 저장해두었습니다.
-    final content = await _scraperService.scrapeArticleContent(widget.article.content);
+    final content =
+    await _scraperService.scrapeArticleContent(widget.article.content);
+
     setState(() {
-      _articleContent = content;
-      _words = _articleContent.split(RegExp(r'\s+')).where((s) => s.isNotEmpty).toList();
+      _words =
+          content.split(RegExp(r'\s+')).where((s) => s.isNotEmpty).toList();
       _currentIndex = 0;
       _isLoading = false;
       if (_words.isNotEmpty) {
@@ -49,7 +51,6 @@ class _BionicReadingPopupState extends State<BionicReadingPopup> {
       } else {
         _isPlaying = false;
         _isFinished = true;
-        _articleContent = '본문 내용을 불러올 수 없습니다.';
       }
     });
   }
@@ -73,14 +74,7 @@ class _BionicReadingPopupState extends State<BionicReadingPopup> {
   }
 
   void _restart() {
-    setState(() {
-      // 스크래핑을 다시 하지 않고, 인덱스와 상태만 초기화
-      _currentIndex = 0;
-      _isFinished = false;
-      _isPlaying = true;
-      // 타이머만 다시 시작
-      _startTimer();
-    });
+    _loadArticleContent();
   }
 
   void _togglePlayPause() {
@@ -113,28 +107,38 @@ class _BionicReadingPopupState extends State<BionicReadingPopup> {
 
   @override
   Widget build(BuildContext context) {
-    final currentWord = _isLoading || _words.isEmpty ? '' : _words[_currentIndex];
-    final progress = _isLoading || _words.isEmpty ? 0.0 : (_currentIndex + 1) / _words.length;
+    final currentWord =
+    _isLoading || _words.isEmpty ? '' : _words[_currentIndex];
+    final progress = _isLoading || _words.isEmpty
+        ? 0.0
+        : (_currentIndex + 1) / _words.length;
 
     return AlertDialog(
-      title: Text(widget.article.title, style: const TextStyle(fontSize: 18), maxLines: 2, overflow: TextOverflow.ellipsis,),
+      title: Text(
+        widget.article.title,
+        style: const TextStyle(fontSize: 18),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
       content: SizedBox(
-        height: 150, // 높이 조절
+        height: 150,
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _words.isEmpty
-            ? const Center(child: Text('본문을 가져올 수 없습니다.'))
+            ? const Center(
+            child: Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text('본문을 가져올 수 없거나 내용이 없습니다.',
+                  textAlign: TextAlign.center),
+            ))
             : Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Expanded(
-              child: SingleChildScrollView(
-                // ★★★ 여기가 수정된 부분입니다 ★★★
-                child: Center(
-                  child: BionicReadingService.getBionicText(
-                    currentWord,
-                    style: const TextStyle(fontSize: 28),
-                  ),
+              child: Center(
+                child: BionicReadingService.getBionicText(
+                  currentWord,
+                  style: const TextStyle(fontSize: 28),
                 ),
               ),
             ),
@@ -144,30 +148,39 @@ class _BionicReadingPopupState extends State<BionicReadingPopup> {
               backgroundColor: Colors.grey.shade300,
               color: Colors.blueGrey,
             ),
-            Text('${_words.isEmpty ? 0 : _currentIndex + 1} / ${_words.length}'),
+            Text(
+                '${_words.isEmpty ? 0 : _currentIndex + 1} / ${_words.length}'),
           ],
         ),
       ),
       actionsAlignment: MainAxisAlignment.center,
       actions: <Widget>[
+        // ★★★ 여기가 수정된 부분입니다 ★★★
         IconButton(
+          iconSize: 32, // 아이콘 크기 지정
           icon: const Icon(Icons.remove_circle_outline),
           tooltip: '느리게',
           onPressed: () => _changeSpeed(-50),
         ),
         if (_isFinished)
           IconButton(
-            icon: const Icon(Icons.replay_circle_filled_outlined, size: 40, color: Colors.blueGrey),
+            icon: const Icon(Icons.replay_circle_filled_outlined,
+                size: 40, color: Colors.blueGrey),
             tooltip: '재시작',
             onPressed: _restart,
           )
         else
           IconButton(
-            icon: Icon(_isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 40),
+            icon: Icon(
+                _isPlaying
+                    ? Icons.pause_circle_filled
+                    : Icons.play_circle_filled,
+                size: 40),
             tooltip: _isPlaying ? '일시정지' : '재생',
             onPressed: _togglePlayPause,
           ),
         IconButton(
+          iconSize: 32, // 아이콘 크기 지정
           icon: const Icon(Icons.add_circle_outline),
           tooltip: '빠르게',
           onPressed: () => _changeSpeed(50),
