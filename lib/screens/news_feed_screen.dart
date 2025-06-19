@@ -1,5 +1,7 @@
+import 'package:bionic_news/delegates/news_search_delegate.dart';
+import 'package:bionic_news/screens/search_result_screen.dart';
 import 'package:flutter/material.dart';
-import '../widgets/news_topic_list.dart'; // 방금 만든 위젯 import
+import '../widgets/news_topic_list.dart';
 
 class NewsFeedScreen extends StatefulWidget {
   const NewsFeedScreen({super.key});
@@ -9,36 +11,53 @@ class NewsFeedScreen extends StatefulWidget {
 }
 
 class _NewsFeedScreenState extends State<NewsFeedScreen> {
-  // 탭에 표시할 토픽 목록 정의
   final List<String> _topics = ['IT/과학', '경제', '생활/문화', '정치', '세계', '스포츠'];
+
+  // ★★★ 여기가 수정된 부분입니다 ★★★
+  // 검색 아이콘을 눌렀을 때 showSearch를 호출
+  Future<void> _onSearchPressed() async {
+    // showSearch 함수는 닫힐 때 검색어를 반환합니다.
+    final String? result = await showSearch<String>(
+      context: context,
+      delegate: NewsSearchDelegate(),
+    );
+
+    // 사용자가 검색어를 입력하고 검색을 완료했을 경우
+    if (result != null && result.isNotEmpty) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => SearchResultScreen(query: result),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // DefaultTabController가 TabBar와 TabBarView를 연결하고 관리합니다.
     return DefaultTabController(
-      length: _topics.length, // 탭의 개수
+      length: _topics.length,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Bionic Reading 뉴스피드'),
-          backgroundColor: Colors.blueGrey[900],
-          foregroundColor: Colors.white,
-          // AppBar의 bottom 영역에 TabBar를 추가
+          actions: [
+            IconButton(
+              onPressed: _onSearchPressed, // 새로 만든 함수 연결
+              icon: const Icon(Icons.search),
+              tooltip: '뉴스 검색',
+            ),
+          ],
           bottom: TabBar(
-            isScrollable: true, // 탭이 많을 경우 스크롤 가능
-            tabs: _topics.map((String topic) {
-              return Tab(text: topic);
-            }).toList(),
+            isScrollable: true,
+            tabs: _topics.map((String topic) => Tab(text: topic)).toList(),
             labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             unselectedLabelStyle: const TextStyle(fontSize: 15),
-            tabAlignment: TabAlignment.start, // 탭을 왼쪽부터 정렬
-            indicatorColor: Colors.lightBlueAccent,
+            tabAlignment: TabAlignment.start,
+            indicatorColor: Theme.of(context).colorScheme.secondary,
             indicatorWeight: 3,
           ),
         ),
-        // TabBarView는 각 탭에 해당하는 화면을 보여줍니다.
         body: TabBarView(
           children: _topics.map((String topic) {
-            // 각 토픽에 맞는 NewsTopicList 위젯을 생성
             return NewsTopicList(query: topic);
           }).toList(),
         ),

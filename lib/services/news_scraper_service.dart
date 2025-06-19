@@ -10,10 +10,15 @@ class NewsScraperService {
       if (response.statusCode == 200) {
         final dom.Document document = html_parser.parse(response.body);
 
+        // ★★★ 여기가 수정된 부분입니다 ★★★
+        // 스크린샷을 통해 새로 찾은 선택자를 최상단에 추가합니다.
         const List<String> contentSelectors = [
+          '#news_content', // 1순위 (방금 찾은 e스포츠 기사용)
+          '.newsct_body',
+          '#newsEndView',
+          '#dic_area',
           '[itemprop="articleBody"]',
           '#article-view-content-div',
-          '#dic_area',
           '#articeBody',
           '#newsEndContents',
           '.article_body',
@@ -30,16 +35,14 @@ class NewsScraperService {
         }
 
         if (articleElement != null) {
-          // ★★★ 여기가 수정된 부분입니다 ★★★
-          // '.social-' 오타를 '.social_share' 등으로 수정합니다.
           const List<String> junkSelectors = [
             'script',
             'style',
             '.ad_section',
             '.article-info',
-            '.social_share', // 소셜 공유 버튼 영역
+            '.social_share',
             '.tag-group',
-            '.copyright', // 저작권 문구 클래스
+            '.copyright',
             '.reporter_area',
             '.news_end_st'
           ];
@@ -52,7 +55,7 @@ class NewsScraperService {
 
           return articleElement.text.trim().replaceAll(RegExp(r'\s{2,}'), ' ');
         } else {
-          print("Could not find content with specific selectors, falling back to body.");
+          print("Could not find a specific content container for URL: $url. Falling back to body.");
           return document.body?.text.trim().replaceAll(RegExp(r'\s{2,}'), ' ') ??
               '본문을 찾을 수 없습니다.';
         }
