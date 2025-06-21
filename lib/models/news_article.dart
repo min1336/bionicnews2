@@ -8,7 +8,7 @@ class NewsArticle {
   final String content; // This field holds the article URL
   final String sourceName;
   final String pubDate;
-  bool isRead; // ★★★ ADDED: To track if the article has been read ★★★
+  bool isRead;
 
   NewsArticle({
     required this.title,
@@ -18,11 +18,9 @@ class NewsArticle {
     required this.content,
     required this.sourceName,
     required this.pubDate,
-    this.isRead = false, // ★★★ ADDED: Default to false ★★★
+    this.isRead = false,
   });
 
-  /// pubDate 문자열을 'yyyy.MM.dd HH:mm' 형식으로 변환하는 getter.
-  /// 파싱에 실패할 경우 원본 문자열을 반환합니다.
   String get formattedPubDate {
     try {
       final DateTime parsedDate =
@@ -33,9 +31,32 @@ class NewsArticle {
     }
   }
 
+  // ★★★ 여기가 추가된 부분입니다: 객체를 Map으로 변환 (JSON 인코딩용) ★★★
+  Map<String, dynamic> toJson() => {
+    'title': title,
+    'author': author,
+    'description': description,
+    'urlToImage': urlToImage,
+    'content': content,
+    'sourceName': sourceName,
+    'pubDate': pubDate,
+    'isRead': isRead,
+  };
+
+  // ★★★ 여기가 추가된 부분입니다: Map으로부터 객체 생성 (JSON 디코딩용) ★★★
+  factory NewsArticle.fromJson(Map<String, dynamic> json) => NewsArticle(
+    title: json['title'],
+    author: json['author'],
+    description: json['description'],
+    urlToImage: json['urlToImage'],
+    content: json['content'],
+    sourceName: json['sourceName'],
+    pubDate: json['pubDate'],
+    isRead: json['isRead'] ?? false,
+  );
+
   static String _cleanHtmlString(String htmlString) {
-    final strippedString =
-    htmlString.replaceAll(RegExp(r"<[^>]*>"), '');
+    final strippedString = htmlString.replaceAll(RegExp(r"<[^>]*>"), '');
     final decodedString = strippedString
         .replaceAll('&quot;', '"')
         .replaceAll('&amp;', '&')
@@ -46,7 +67,8 @@ class NewsArticle {
     return decodedString;
   }
 
-  factory NewsArticle.fromJson(Map<String, dynamic> json, {bool isRead = false}) {
+  // ★★★ 여기가 수정된 부분입니다: 기존 fromJson의 이름을 변경하여 역할 분리 ★★★
+  factory NewsArticle.fromNaverJson(Map<String, dynamic> json, {bool isRead = false}) {
     final cleanedTitle = _cleanHtmlString(json['title'] ?? '제목 없음');
     final cleanedDesc = _cleanHtmlString(json['description'] ?? '내용 없음');
 
@@ -58,7 +80,7 @@ class NewsArticle {
       content: json['link'] ?? '',
       sourceName: json['originallink'] ?? '',
       pubDate: json['pubDate'] ?? '',
-      isRead: isRead, // ★★★ ADDED: Set from parameter ★★★
+      isRead: isRead,
     );
   }
 }

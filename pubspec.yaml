@@ -1,4 +1,4 @@
-name: bionic_news
+name: focus_news
 description: "A new Flutter project."
 publish_to: 'none'
 version: 1.0.0+1
@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
 
+  shimmer: ^3.0.0
   http: ^1.2.1
   html: ^0.15.4
   flutter_dotenv: ^5.1.0

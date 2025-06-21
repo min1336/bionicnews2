@@ -1,8 +1,10 @@
-import 'package:bionic_news/models/news_article.dart';
-import 'package:bionic_news/services/bionic_reading_service.dart';
-import 'package:bionic_news/viewmodels/reader_viewmodel.dart';
-// ★★★ 여기가 수정된 부분입니다: 잘못된 패키지 경로를 올바른 상대 경로로 변경 ★★★
-import '../viewmodels/settings_viewmodel.dart';
+import 'package:focus_news/models/news_article.dart';
+import 'package:focus_news/screens/paywall_screen.dart';
+import 'package:focus_news/services/focus_reading_service.dart'; // 수정된 import
+import 'package:focus_news/viewmodels/bookmark_viewmodel.dart';
+import 'package:focus_news/viewmodels/reader_viewmodel.dart';
+import 'package:focus_news/viewmodels/settings_viewmodel.dart';
+import 'package:focus_news/viewmodels/user_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -10,11 +12,45 @@ import 'package:url_launcher/url_launcher.dart';
 class ReaderScreen extends StatelessWidget {
   final NewsArticle article;
 
-  const ReaderScreen({super.key, required this.article});
+  const ReaderScreen({
+    super.key,
+    required this.article,
+  });
+
+  void _showUpgradeDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('프리미엄 기능'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('닫기'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const PaywallScreen(),
+                  fullscreenDialog: true,
+                ));
+              },
+              child: const Text('업그레이드'),
+            )
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final settingsViewModel = context.read<SettingsViewModel>();
+    final bookmarkViewModel = context.watch<BookmarkViewModel>();
+    final userViewModel = context.read<UserViewModel>();
+    final isBookmarked = bookmarkViewModel.isBookmarked(article);
 
     return ChangeNotifierProvider(
       create: (_) => ReaderViewModel(
@@ -33,6 +69,26 @@ class ReaderScreen extends StatelessWidget {
               title:
               Text(article.sourceName, style: const TextStyle(fontSize: 16)),
               actions: [
+                IconButton(
+                  icon: Icon(
+                    isBookmarked ? Icons.star : Icons.star_border,
+                    color: isBookmarked ? Colors.amber : null,
+                  ),
+                  tooltip: isBookmarked ? '북마크 해제' : '북마크 추가',
+                  onPressed: () {
+                    if (isBookmarked) {
+                      bookmarkViewModel.removeBookmark(article);
+                    } else {
+                      if (!userViewModel.isPremium &&
+                          bookmarkViewModel.bookmarks.length >= 5) {
+                        _showUpgradeDialog(context,
+                            '무료 사용자는 북마크를 최대 5개까지 추가할 수 있습니다. 더 많은 기사를 저장하려면 프리미엄으로 업그레이드하세요.');
+                      } else {
+                        bookmarkViewModel.addBookmark(article);
+                      }
+                    }
+                  },
+                ),
                 IconButton(
                   icon: const Icon(Icons.open_in_browser),
                   tooltip: '원본 기사 보기',
@@ -66,7 +122,6 @@ class ReaderScreen extends StatelessWidget {
     if (viewModel.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-
     if (viewModel.errorMessage.isNotEmpty) {
       return Center(
         child: Column(
@@ -94,36 +149,15 @@ class ReaderScreen extends StatelessWidget {
         const SizedBox(height: 24),
         Expanded(
           child: Center(
-            child: BionicReadingService.getBionicText(
+            // ★★★ 여기가 수정된 부분입니다: 클래스 이름 변경 ★★★
+            child: FocusReadingService.getBionicText(
               viewModel.currentWord,
               style: const TextStyle(fontSize: 36),
-              fixationSaccadeRatio: viewModel.saccadeRatio,
               emphasisColor: viewModel.emphasisColor,
             ),
           ),
         ),
-        if (!viewModel.isFinished)
-          Padding(
-            padding:
-            const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Column(
-              children: [
-                Text('강조 비율: ${(viewModel.saccadeRatio * 100).toStringAsFixed(0)}%'),
-                Slider(
-                  value: viewModel.saccadeRatio,
-                  min: 0.2,
-                  max: 0.8,
-                  divisions: 6,
-                  label:
-                  '${(viewModel.saccadeRatio * 100).toStringAsFixed(0)}%',
-                  onChanged: (double value) {
-                    viewModel.changeSaccadeRatio(value);
-                  },
-                ),
-              ],
-            ),
-          ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
         Column(
           children: [
             LinearProgressIndicator(

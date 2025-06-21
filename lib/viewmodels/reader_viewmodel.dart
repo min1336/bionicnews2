@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:bionic_news/services/news_scraper_service.dart';
+import 'package:focus_news/services/news_scraper_service.dart';
 import 'package:flutter/material.dart';
 
 class ReaderViewModel extends ChangeNotifier {

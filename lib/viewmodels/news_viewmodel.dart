@@ -1,4 +1,4 @@
-import 'package:bionic_news/services/read_article_service.dart';
+import 'package:focus_news/services/read_article_service.dart';
 import 'package:flutter/material.dart';
 import '../models/news_article.dart';
 import '../services/news_api_service.dart';

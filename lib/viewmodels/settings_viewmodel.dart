@@ -1,4 +1,4 @@
-import 'package:bionic_news/services/settings_service.dart';
+import 'package:focus_news/services/settings_service.dart';
 import 'package:flutter/material.dart';
 
 class SettingsViewModel extends ChangeNotifier {

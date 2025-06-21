@@ -1,5 +1,5 @@
-import 'package:bionic_news/viewmodels/news_viewmodel.dart';
-import 'package:bionic_news/widgets/news_list_view.dart';
+import 'package:focus_news/viewmodels/news_viewmodel.dart';
+import 'package:focus_news/widgets/news_list_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
