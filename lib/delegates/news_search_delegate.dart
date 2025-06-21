@@ -68,11 +68,11 @@ class NewsSearchDelegate extends SearchDelegate<String> {
                 ),
                 TextButton(
                   onPressed: () {
-                    // ★★★ 여기가 수정된 부분입니다 (전체 삭제) ★★★
                     _historyService.clearSearchHistory().then((_) {
-                      // 저장이 완료된 후, 로컬 리스트를 비우고 UI를 갱신
                       _searchHistory.clear();
-                      showSuggestions(context);
+                      // ★★★ 여기가 수정된 부분입니다 ★★★
+                      // showSuggestions(context) 대신 notifyListeners() 호출
+                      notifyListeners();
                     });
                   },
                   child: const Text('전체 삭제'),
@@ -92,11 +92,11 @@ class NewsSearchDelegate extends SearchDelegate<String> {
                 trailing: IconButton(
                   icon: const Icon(Icons.clear, size: 20),
                   onPressed: () {
-                    // ★★★ 여기가 수정된 부분입니다 (개별 삭제) ★★★
                     _historyService.removeSearchTerm(suggestion).then((_) {
-                      // 저장이 완료된 후, 로컬 리스트에서 제거하고 UI를 갱신
                       _searchHistory.remove(suggestion);
-                      showSuggestions(context);
+                      // ★★★ 여기가 수정된 부분입니다 ★★★
+                      // showSuggestions(context) 대신 notifyListeners() 호출
+                      notifyListeners();
                     });
                   },
                 ),

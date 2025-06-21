@@ -1,19 +1,22 @@
-import 'package:bionic_news/models/news_article.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as html_parser;
 
 class NewsScraperService {
+  // ★★★ 여기가 수정된 부분입니다: 'static' 키워드 추가 ★★★
+  // 스크래핑 실패 시 ViewModel에서 식별할 수 있도록 static 상수로 변경합니다.
+  static const String parsingFailedError = "Error: Content parsing failed.";
+  static const String requestFailedError = "Error: Failed to load page.";
+  static const String exceptionError = "Error: Scraping exception.";
+
   Future<String> scrapeArticleContent(String url) async {
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final dom.Document document = html_parser.parse(response.body);
 
-        // ★★★ 여기가 수정된 부분입니다 ★★★
-        // 스크린샷을 통해 새로 찾은 선택자를 최상단에 추가합니다.
         const List<String> contentSelectors = [
-          '#news_content', // 1순위 (방금 찾은 e스포츠 기사용)
+          '#news_content',
           '.newsct_body',
           '#newsEndView',
           '#dic_area',
@@ -55,18 +58,17 @@ class NewsScraperService {
 
           return articleElement.text.trim().replaceAll(RegExp(r'\s{2,}'), ' ');
         } else {
-          print("Could not find a specific content container for URL: $url. Falling back to body.");
-          return document.body?.text.trim().replaceAll(RegExp(r'\s{2,}'), ' ') ??
-              '본문을 찾을 수 없습니다.';
+          print("Could not find a specific content container for URL: $url. Failing.");
+          return parsingFailedError;
         }
 
       } else {
         print('Failed to load URL: $url, status code: ${response.statusCode}');
-        return '기사 본문을 불러오는 데 실패했습니다.';
+        return requestFailedError;
       }
     } catch (e) {
       print('Error scraping URL: $url, error: $e');
-      return '기사 본문을 불러오는 중 오류가 발생했습니다.';
+      return exceptionError;
     }
   }
 }

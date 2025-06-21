@@ -1,7 +1,6 @@
-import 'package:bionic_news/models/news_article.dart';
-import 'package:bionic_news/screens/reader_screen.dart';
 import 'package:bionic_news/services/read_article_service.dart';
 import 'package:bionic_news/viewmodels/news_viewmodel.dart';
+import 'package:bionic_news/widgets/bionic_reading_popup.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -21,9 +20,6 @@ class _NewsListViewState extends State<NewsListView>
   @override
   void initState() {
     super.initState();
-    // ★★★ 여기가 수정된 부분입니다 ★★★
-    // 불필요한 `addPostFrameCallback` 래퍼를 제거하고 리스너를 직접 등록합니다.
-    // 이것이 원래의 올바른 동작 방식입니다.
     _scrollController.addListener(_onScroll);
   }
 
@@ -118,11 +114,13 @@ class _NewsListViewState extends State<NewsListView>
                     // 2. 읽은 기사 정보를 로컬 저장소에 영구 저장
                     _readArticleService.addReadArticle(article.content);
 
-                    // 3. ReaderScreen으로 이동합니다.
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => ReaderScreen(article: article),
-                      ),
+                    // ★★★ 여기가 수정된 부분입니다 ★★★
+                    // 3. ReaderScreen으로 이동하는 대신, BionicReadingPopup을 띄웁니다.
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return BionicReadingPopup(article: article);
+                      },
                     );
                   },
                 ),

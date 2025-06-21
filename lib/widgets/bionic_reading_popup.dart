@@ -1,170 +1,101 @@
-import 'dart:async';
 import 'package:bionic_news/models/news_article.dart';
 import 'package:bionic_news/services/bionic_reading_service.dart';
-import 'package:bionic_news/services/news_scraper_service.dart';
+import 'package:bionic_news/viewmodels/reader_viewmodel.dart';
+// ★★★ 여기가 수정된 부분입니다: 잘못된 패키지 경로를 올바른 상대 경로로 변경 ★★★
+import '../viewmodels/settings_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-class BionicReadingPopup extends StatefulWidget {
+class BionicReadingPopup extends StatelessWidget {
   final NewsArticle article;
 
   const BionicReadingPopup({super.key, required this.article});
 
   @override
-  State<BionicReadingPopup> createState() => _BionicReadingPopupState();
-}
-
-class _BionicReadingPopupState extends State<BionicReadingPopup> {
-  late List<String> _words;
-  int _currentIndex = 0;
-  Timer? _timer;
-  bool _isPlaying = true;
-  int _wpm = 450;
-  bool _isFinished = false;
-  String _articleContent = '';
-  bool _isLoading = true;
-  final _scraperService = NewsScraperService();
-
-  @override
-  void initState() {
-    super.initState();
-    _words = [];
-    _loadArticleContent();
-  }
-
-  Future<void> _loadArticleContent() async {
-    setState(() {
-      _isLoading = true;
-      _isFinished = false;
-      _isPlaying = true;
-      _currentIndex = 0;
-    });
-
-    final content = await _scraperService.scrapeArticleContent(widget.article.content);
-    if (!mounted) return;
-
-    setState(() {
-      _articleContent = content;
-      _words = _articleContent.split(RegExp(r'\s+')).where((s) => s.isNotEmpty).toList();
-      _isLoading = false;
-      if (_words.isNotEmpty) {
-        _startTimer();
-      } else {
-        _isPlaying = false;
-        _isFinished = true;
-      }
-    });
-  }
-
-  void _startTimer() {
-    _timer?.cancel();
-    final duration = Duration(milliseconds: (60000 / _wpm).round());
-    _timer = Timer.periodic(duration, (timer) {
-      if (_isPlaying && mounted && _currentIndex < _words.length - 1) {
-        setState(() {
-          _currentIndex++;
-        });
-      } else {
-        _timer?.cancel();
-        if (mounted) {
-          setState(() {
-            _isPlaying = false;
-            _isFinished = true;
-          });
-        }
-      }
-    });
-  }
-
-  void _restart() {
-    _loadArticleContent();
-  }
-
-  void _togglePlayPause() {
-    if (_isFinished || _isLoading) return;
-    setState(() {
-      _isPlaying = !_isPlaying;
-      if (_isPlaying) {
-        _startTimer();
-      } else {
-        _timer?.cancel();
-      }
-    });
-  }
-
-  void _changeSpeed(int amount) {
-    setState(() {
-      _wpm = (_wpm + amount).clamp(60, 900);
-      if (_isPlaying) {
-        _startTimer();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final currentWord = _isLoading || _words.isEmpty ? '' : _words[_currentIndex];
-    final progress = _isLoading || _words.isEmpty ? 0.0 : (_currentIndex + 1) / _words.length;
+    final settingsViewModel = context.read<SettingsViewModel>();
 
-    return AlertDialog(
-      title: Text(widget.article.title, style: const TextStyle(fontSize: 18), maxLines: 2, overflow: TextOverflow.ellipsis,),
-      content: SizedBox(
-        height: 150,
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _words.isEmpty
-            ? const Center(child: Text('본문을 가져올 수 없습니다.'))
-            : Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Center(
-                child: BionicReadingService.getBionicText(
-                  currentWord,
-                  style: const TextStyle(fontSize: 28),
-                ),
+    return ChangeNotifierProvider(
+      create: (_) => ReaderViewModel(
+        articleUrl: article.content,
+        initialWpm: settingsViewModel.wpm,
+        initialSaccadeRatio: settingsViewModel.saccadeRatio,
+        initialEmphasisColor: settingsViewModel.emphasisColor,
+        onWpmChanged: (newWpm) => settingsViewModel.updateWpm(newWpm),
+        onSaccadeRatioChanged: (newRatio) =>
+            settingsViewModel.updateSaccadeRatio(newRatio),
+      ),
+      child: Consumer<ReaderViewModel>(
+        builder: (context, viewModel, child) {
+          return AlertDialog(
+            title: Text(
+              article.title,
+              style: const TextStyle(fontSize: 18),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            content: SizedBox(
+              height: 150,
+              child: viewModel.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : viewModel.errorMessage.isNotEmpty
+                  ? Center(
+                  child: Text(
+                    viewModel.errorMessage,
+                    textAlign: TextAlign.center,
+                  ))
+                  : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Center(
+                      child: BionicReadingService.getBionicText(
+                        viewModel.currentWord,
+                        style: const TextStyle(fontSize: 28),
+                        fixationSaccadeRatio: viewModel.saccadeRatio,
+                        emphasisColor: viewModel.emphasisColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  LinearProgressIndicator(
+                    value: viewModel.progress,
+                    backgroundColor: Colors.grey.shade300,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  Text(
+                      '${viewModel.wordCount == 0 ? 0 : viewModel.currentWordIndex} / ${viewModel.wordCount}'),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
-            LinearProgressIndicator(
-              value: progress,
-              backgroundColor: Colors.grey.shade300,
-              color: Colors.blueGrey,
-            ),
-            Text('${_words.isEmpty ? 0 : _currentIndex + 1} / ${_words.length}'),
-          ],
-        ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: <Widget>[
+              IconButton(
+                iconSize: 40,
+                tooltip: viewModel.isFinished
+                    ? '재시작'
+                    : (viewModel.isPlaying ? '일시정지' : '재생'),
+                icon: viewModel.isFinished
+                    ? Icon(Icons.replay_circle_filled_outlined,
+                    color: Theme.of(context).colorScheme.primary)
+                    : Icon(viewModel.isPlaying
+                    ? Icons.pause_circle_filled
+                    : Icons.play_circle_filled),
+                onPressed: viewModel.isLoading
+                    ? null
+                    : () {
+                  if (viewModel.isFinished) {
+                    viewModel.loadArticleContent(article.content,
+                        isRestart: true);
+                  } else {
+                    viewModel.togglePlayPause();
+                  }
+                },
+              ),
+            ],
+          );
+        },
       ),
-      actionsAlignment: MainAxisAlignment.center,
-      actions: <Widget>[
-        IconButton(
-          icon: const Icon(Icons.remove_circle_outline),
-          tooltip: '느리게',
-          onPressed: () => _changeSpeed(-50),
-        ),
-        if (_isFinished)
-          IconButton(
-            icon: const Icon(Icons.replay_circle_filled_outlined, size: 40, color: Colors.blueGrey),
-            tooltip: '재시작',
-            onPressed: _restart,
-          )
-        else
-          IconButton(
-            icon: Icon(_isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 40),
-            tooltip: _isPlaying ? '일시정지' : '재생',
-            onPressed: _togglePlayPause,
-          ),
-        IconButton(
-          icon: const Icon(Icons.add_circle_outline),
-          tooltip: '빠르게',
-          onPressed: () => _changeSpeed(50),
-        ),
-      ],
     );
   }
 }
