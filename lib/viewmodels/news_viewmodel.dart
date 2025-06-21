@@ -1,3 +1,4 @@
+import 'package:bionic_news/services/read_article_service.dart';
 import 'package:flutter/material.dart';
 import '../models/news_article.dart';
 import '../services/news_api_service.dart';
@@ -6,6 +7,7 @@ enum NotifierState { initial, loading, loadingMore, loaded, error }
 
 class NewsViewModel extends ChangeNotifier {
   final _newsApiService = NewsApiService();
+  final _readArticleService = ReadArticleService(); // 읽기 서비스 인스턴스 추가
 
   List<NewsArticle> articles = [];
   NotifierState state = NotifierState.initial;
@@ -20,8 +22,6 @@ class NewsViewModel extends ChangeNotifier {
   Future<void> fetchNews(String query, {bool isRefresh = false}) async {
     // 1. 상태 확인 및 초기화
     if (isRefresh) {
-      // 새로고침 요청 시, 모든 상태를 초기화합니다.
-      // 이는 과거 코드의 `_loadInitialNews`와 유사한 역할입니다.
       debugPrint("[NewsViewModel] Refreshing data for query: '$query'");
       articles.clear();
       _start = 1;
@@ -30,12 +30,9 @@ class NewsViewModel extends ChangeNotifier {
       state = NotifierState.loading;
       notifyListeners();
     } else {
-      // 더 불러오기 요청 시, 이미 로딩 중이거나 더 이상 데이터가 없으면 중복 실행을 방지합니다.
-      // 이는 과거 코드의 `if (_isLoadingMore || !_hasMore) return;` 부분에 해당합니다.
       if (state == NotifierState.loading || state == NotifierState.loadingMore || !_hasMore) {
         return;
       }
-      // '더 불러오기' 시작을 UI에 알립니다.
       state = NotifierState.loadingMore;
       notifyListeners();
     }
@@ -44,7 +41,6 @@ class NewsViewModel extends ChangeNotifier {
 
     // 2. API 호출
     try {
-      // 네이버 API는 start 파라미터가 1000을 초과하면 에러를 반환하므로 이를 방지합니다.
       if (_start > 1000) {
         _hasMore = false;
         state = NotifierState.loaded;
@@ -55,14 +51,22 @@ class NewsViewModel extends ChangeNotifier {
       final newArticles = await _newsApiService.fetchNews(query, start: _start, display: _display);
 
       // 3. 상태 업데이트
-      // 불러온 데이터가 요청한 개수보다 적으면, 마지막 페이지로 간주합니다.
-      if (newArticles.length < _display) {
+      // ★★★ 여기가 수정된 부분입니다 ★★★
+      // 불러온 기사 리스트가 '비어있을 때'만 마지막 페이지로 간주합니다.
+      if (newArticles.isEmpty) {
         _hasMore = false;
         debugPrint("[NewsViewModel] Reached end of results for '$query'.");
       }
 
+      final readLinks = await _readArticleService.getReadArticles();
+      for (var article in newArticles) {
+        if (readLinks.contains(article.content)) {
+          article.isRead = true;
+        }
+      }
+
       articles.addAll(newArticles);
-      _start += _display; // 다음 요청을 위해 시작 인덱스를 증가시킵니다.
+      _start += _display;
       state = NotifierState.loaded;
 
     } catch (e) {
@@ -73,5 +77,14 @@ class NewsViewModel extends ChangeNotifier {
 
     // 4. UI 갱신
     notifyListeners();
+  }
+
+  /// 특정 기사를 '읽음'으로 표시하고 UI를 갱신하는 함수
+  void markArticleAsRead(NewsArticle article) {
+    final index = articles.indexWhere((a) => a.content == article.content);
+    if (index != -1 && !articles[index].isRead) {
+      articles[index].isRead = true;
+      notifyListeners();
+    }
   }
 }

@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 class NewsArticle {
   final String title;
   final String author;
@@ -18,6 +20,18 @@ class NewsArticle {
     required this.pubDate,
     this.isRead = false, // ★★★ ADDED: Default to false ★★★
   });
+
+  /// pubDate 문자열을 'yyyy.MM.dd HH:mm' 형식으로 변환하는 getter.
+  /// 파싱에 실패할 경우 원본 문자열을 반환합니다.
+  String get formattedPubDate {
+    try {
+      final DateTime parsedDate =
+      DateFormat("E, d MMM yyyy HH:mm:ss Z", "en_US").parse(pubDate);
+      return DateFormat('yyyy.MM.dd HH:mm').format(parsedDate);
+    } catch (e) {
+      return pubDate;
+    }
+  }
 
   static String _cleanHtmlString(String htmlString) {
     final strippedString =
