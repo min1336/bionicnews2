@@ -3,8 +3,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/news_feed_screen.dart';
 
 Future<void> main() async {
-  // .env 파일 로드는 그대로 유지
   await dotenv.load(fileName: ".env");
+  // ★★★ FIXED: Removed the MultiProvider wrapper that was causing the crash ★★★
   runApp(const MyApp());
 }
 

@@ -13,17 +13,13 @@ class NewsFeedScreen extends StatefulWidget {
 class _NewsFeedScreenState extends State<NewsFeedScreen> {
   final List<String> _topics = ['IT/과학', '경제', '생활/문화', '정치', '세계', '스포츠'];
 
-  // ★★★ 여기가 수정된 부분입니다 ★★★
-  // 검색 아이콘을 눌렀을 때 showSearch를 호출
   Future<void> _onSearchPressed() async {
-    // showSearch 함수는 닫힐 때 검색어를 반환합니다.
     final String? result = await showSearch<String>(
       context: context,
       delegate: NewsSearchDelegate(),
     );
 
-    // 사용자가 검색어를 입력하고 검색을 완료했을 경우
-    if (result != null && result.isNotEmpty) {
+    if (result != null && result.isNotEmpty && mounted) {
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => SearchResultScreen(query: result),
@@ -41,7 +37,7 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
           title: const Text('Bionic Reading 뉴스피드'),
           actions: [
             IconButton(
-              onPressed: _onSearchPressed, // 새로 만든 함수 연결
+              onPressed: _onSearchPressed,
               icon: const Icon(Icons.search),
               tooltip: '뉴스 검색',
             ),

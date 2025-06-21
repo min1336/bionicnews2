@@ -3,9 +3,10 @@ class NewsArticle {
   final String author;
   final String description;
   final String urlToImage;
-  final String content;
+  final String content; // This field holds the article URL
   final String sourceName;
-  final String pubDate; // ★★★ 1. pubDate 필드 추가 ★★★
+  final String pubDate;
+  bool isRead; // ★★★ ADDED: To track if the article has been read ★★★
 
   NewsArticle({
     required this.title,
@@ -14,7 +15,8 @@ class NewsArticle {
     required this.urlToImage,
     required this.content,
     required this.sourceName,
-    required this.pubDate, // ★★★ 2. 생성자에 추가 ★★★
+    required this.pubDate,
+    this.isRead = false, // ★★★ ADDED: Default to false ★★★
   });
 
   static String _cleanHtmlString(String htmlString) {
@@ -30,7 +32,7 @@ class NewsArticle {
     return decodedString;
   }
 
-  factory NewsArticle.fromJson(Map<String, dynamic> json) {
+  factory NewsArticle.fromJson(Map<String, dynamic> json, {bool isRead = false}) {
     final cleanedTitle = _cleanHtmlString(json['title'] ?? '제목 없음');
     final cleanedDesc = _cleanHtmlString(json['description'] ?? '내용 없음');
 
@@ -41,7 +43,8 @@ class NewsArticle {
       urlToImage: '',
       content: json['link'] ?? '',
       sourceName: json['originallink'] ?? '',
-      pubDate: json['pubDate'] ?? '', // ★★★ 3. JSON에서 pubDate 값 파싱 ★★★
+      pubDate: json['pubDate'] ?? '',
+      isRead: isRead, // ★★★ ADDED: Set from parameter ★★★
     );
   }
 }

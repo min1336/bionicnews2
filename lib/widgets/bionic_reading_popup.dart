@@ -27,7 +27,7 @@ class _BionicReadingPopupState extends State<BionicReadingPopup> {
   @override
   void initState() {
     super.initState();
-    _words = []; // 초기화
+    _words = [];
     _loadArticleContent();
   }
 
@@ -36,20 +36,21 @@ class _BionicReadingPopupState extends State<BionicReadingPopup> {
       _isLoading = true;
       _isFinished = false;
       _isPlaying = true;
+      _currentIndex = 0;
     });
-    // 네이버 뉴스 링크는 content 필드에 저장해두었습니다.
+
     final content = await _scraperService.scrapeArticleContent(widget.article.content);
+    if (!mounted) return;
+
     setState(() {
       _articleContent = content;
       _words = _articleContent.split(RegExp(r'\s+')).where((s) => s.isNotEmpty).toList();
-      _currentIndex = 0;
       _isLoading = false;
       if (_words.isNotEmpty) {
         _startTimer();
       } else {
         _isPlaying = false;
         _isFinished = true;
-        _articleContent = '본문 내용을 불러올 수 없습니다.';
       }
     });
   }
@@ -58,16 +59,18 @@ class _BionicReadingPopupState extends State<BionicReadingPopup> {
     _timer?.cancel();
     final duration = Duration(milliseconds: (60000 / _wpm).round());
     _timer = Timer.periodic(duration, (timer) {
-      if (_isPlaying && _currentIndex < _words.length - 1) {
+      if (_isPlaying && mounted && _currentIndex < _words.length - 1) {
         setState(() {
           _currentIndex++;
         });
       } else {
         _timer?.cancel();
-        setState(() {
-          _isPlaying = false;
-          _isFinished = true;
-        });
+        if (mounted) {
+          setState(() {
+            _isPlaying = false;
+            _isFinished = true;
+          });
+        }
       }
     });
   }
@@ -78,7 +81,6 @@ class _BionicReadingPopupState extends State<BionicReadingPopup> {
 
   void _togglePlayPause() {
     if (_isFinished || _isLoading) return;
-
     setState(() {
       _isPlaying = !_isPlaying;
       if (_isPlaying) {
@@ -112,7 +114,7 @@ class _BionicReadingPopupState extends State<BionicReadingPopup> {
     return AlertDialog(
       title: Text(widget.article.title, style: const TextStyle(fontSize: 18), maxLines: 2, overflow: TextOverflow.ellipsis,),
       content: SizedBox(
-        height: 150, // 높이 조절
+        height: 150,
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _words.isEmpty
@@ -121,13 +123,10 @@ class _BionicReadingPopupState extends State<BionicReadingPopup> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Expanded(
-              child: SingleChildScrollView(
-                // ★★★ 여기가 수정된 부분입니다 ★★★
-                child: Center(
-                  child: BionicReadingService.getBionicText(
-                    currentWord,
-                    style: const TextStyle(fontSize: 28),
-                  ),
+              child: Center(
+                child: BionicReadingService.getBionicText(
+                  currentWord,
+                  style: const TextStyle(fontSize: 28),
                 ),
               ),
             ),
