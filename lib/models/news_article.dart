@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:intl/intl.dart';
 
 class NewsArticle {
@@ -42,7 +43,6 @@ class NewsArticle {
     'isRead': isRead,
   };
 
-  // ★★★ 여기가 수정된 부분입니다: 모든 필드에 null-safety 추가 ★★★
   factory NewsArticle.fromJson(Map<String, dynamic> json) => NewsArticle(
     title: json['title'] ?? '제목 없음',
     author: json['author'] ?? '',

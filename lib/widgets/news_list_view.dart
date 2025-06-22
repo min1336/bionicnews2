@@ -1,5 +1,7 @@
+import 'package:focus_news/models/news_article.dart';
 import 'package:focus_news/services/read_article_service.dart';
 import 'package:focus_news/viewmodels/news_viewmodel.dart';
+import 'package:focus_news/widgets/error_display_widget.dart';
 import 'package:focus_news/widgets/news_card_skeleton.dart';
 import 'package:focus_news/widgets/reader_popup.dart';
 import 'package:flutter/material.dart';
@@ -62,7 +64,14 @@ class _NewsListViewState extends State<NewsListView>
 
         if (viewModel.state == NotifierState.error &&
             viewModel.articles.isEmpty) {
-          return Center(child: Text('오류가 발생했습니다: ${viewModel.errorMessage}'));
+          return ErrorDisplayWidget(
+            errorMessage: viewModel.errorMessage,
+            onRetry: () {
+              if (viewModel.currentQuery != null) {
+                viewModel.fetchNews(viewModel.currentQuery!, isRefresh: true);
+              }
+            },
+          );
         }
 
         if (viewModel.articles.isEmpty &&

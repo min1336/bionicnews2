@@ -1,5 +1,7 @@
+import 'package:focus_news/models/news_article.dart';
 import 'package:focus_news/screens/reader_screen.dart';
 import 'package:focus_news/viewmodels/bookmark_viewmodel.dart';
+import 'package:focus_news/widgets/error_display_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -19,6 +21,14 @@ class BookmarkScreen extends StatelessWidget {
         builder: (context, viewModel, child) {
           if (viewModel.isLoading) {
             return const Center(child: CircularProgressIndicator());
+          }
+
+          // ★★★ 여기가 추가된 부분입니다: 오류 처리 UI ★★★
+          if (viewModel.hasError) {
+            return ErrorDisplayWidget(
+              errorMessage: viewModel.errorMessage,
+              onRetry: () => viewModel.loadBookmarks(),
+            );
           }
 
           if (viewModel.bookmarks.isEmpty) {
