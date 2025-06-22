@@ -1,9 +1,13 @@
 import 'package:focus_news/models/news_article.dart';
 import 'package:focus_news/services/bookmark_service.dart';
+import 'package:focus_news/services/review_service.dart';
 import 'package:flutter/material.dart';
 
 class BookmarkViewModel extends ChangeNotifier {
   final _bookmarkService = BookmarkService();
+  // ★★★ 여기가 추가된 부분입니다 ★★★
+  final _reviewService = ReviewService();
+
   List<NewsArticle> _bookmarks = [];
   bool _isLoading = true;
 
@@ -25,22 +29,20 @@ class BookmarkViewModel extends ChangeNotifier {
   }
 
   Future<void> addBookmark(NewsArticle article) async {
-    // UI에 즉시 반영
     _bookmarks.add(article);
     notifyListeners();
-    // 서비스에 저장
     await _bookmarkService.addBookmark(article);
+    // ★★★ 여기가 추가된 부분입니다: 북마크 추가 후 리뷰 요청 조건 확인 ★★★
+    await _reviewService.requestReviewIfNeeded();
   }
 
   Future<void> removeBookmark(NewsArticle article) async {
-    // UI에 즉시 반영
-    _bookmarks.removeWhere((item) => item.content == article.content);
+    _bookmarks.removeWhere((item) => item.articleUrl == article.articleUrl);
     notifyListeners();
-    // 서비스에서 삭제
     await _bookmarkService.removeBookmark(article);
   }
 
   bool isBookmarked(NewsArticle article) {
-    return _bookmarks.any((item) => item.content == article.content);
+    return _bookmarks.any((item) => item.articleUrl == article.articleUrl);
   }
 }

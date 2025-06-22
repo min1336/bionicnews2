@@ -19,15 +19,11 @@ class NewsSearchDelegate extends SearchDelegate<String> {
   Widget buildSuggestions(BuildContext context) {
     if (!_isHistoryLoaded) {
       _loadHistory().then((_) {
-        // Use showSuggestions to trigger a rebuild once history is loaded.
-        // This part is tricky, and a direct state update is better if possible.
-        // For now, keeping the original logic for initial load.
         showSuggestions(context);
       });
       return const Center(child: CircularProgressIndicator());
     }
 
-    // ★★★ 여기가 수정된 부분입니다: StatefulBuilder로 감싸기 ★★★
     return StatefulBuilder(
       builder: (BuildContext context, StateSetter setState) {
         final suggestionList = query.isEmpty
@@ -69,9 +65,7 @@ class NewsSearchDelegate extends SearchDelegate<String> {
                     ),
                     TextButton(
                       onPressed: () {
-                        // 전체 삭제
                         _historyService.clearSearchHistory().then((_) {
-                          // ★★★ 여기가 수정된 부분입니다: setState 호출 ★★★
                           setState(() {
                             _searchHistory.clear();
                           });
@@ -95,9 +89,7 @@ class NewsSearchDelegate extends SearchDelegate<String> {
                     trailing: IconButton(
                       icon: const Icon(Icons.clear, size: 20),
                       onPressed: () {
-                        // 개별 삭제
                         _historyService.removeSearchTerm(suggestion).then((_) {
-                          // ★★★ 여기가 수정된 부분입니다: setState 호출 ★★★
                           setState(() {
                             _searchHistory.remove(suggestion);
                           });
@@ -153,16 +145,22 @@ class NewsSearchDelegate extends SearchDelegate<String> {
     );
   }
 
+  // ★★★ 여기가 수정된 부분입니다 ★★★
   @override
   ThemeData appBarTheme(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    // 현재 테마의 색상을 사용하여 검색창 테마를 설정합니다.
     return theme.copyWith(
       appBarTheme: theme.appBarTheme.copyWith(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: colorScheme.surface, // 배경색
+        foregroundColor: colorScheme.onSurface, // 아이콘 및 텍스트 색상
+        surfaceTintColor: Colors.transparent, // 스크롤 시 색상 변경 방지
+        elevation: 0,
       ),
-      inputDecorationTheme: const InputDecorationTheme(
-        hintStyle: TextStyle(color: Colors.grey),
+      inputDecorationTheme: InputDecorationTheme(
+        hintStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.6)),
         border: InputBorder.none,
       ),
     );

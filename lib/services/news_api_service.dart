@@ -8,8 +8,10 @@ class NewsApiService {
   final String _clientSecret = dotenv.env['NAVER_CLIENT_SECRET'] ?? '';
   final String _baseUrl = 'https://openapi.naver.com/v1/search/news.json';
 
-  Future<List<NewsArticle>> fetchNews(String query, {int start = 1, int display = 100}) async {
-    final url = '$_baseUrl?query=${Uri.encodeComponent(query)}&display=$display&start=$start';
+  Future<List<NewsArticle>> fetchNews(String query,
+      {int start = 1, int display = 100}) async {
+    final url =
+        '$_baseUrl?query=${Uri.encodeComponent(query)}&display=$display&start=$start';
 
     try {
       final response = await http.get(
@@ -32,12 +34,12 @@ class NewsApiService {
 
         final uniqueArticles = _removeDuplicates(filteredArticles);
 
-        // ★★★ 여기가 수정된 부분입니다: fromNaverJson 호출 ★★★
         return uniqueArticles
             .map((json) => NewsArticle.fromNaverJson(json))
             .toList();
       } else {
-        throw Exception('API로부터 잘못된 응답을 받았습니다 (Status code: ${response.statusCode})');
+        throw Exception(
+            'API로부터 잘못된 응답을 받았습니다 (Status code: ${response.statusCode})');
       }
     } catch (e) {
       throw Exception('네트워크 요청 중 오류가 발생했습니다: $e');

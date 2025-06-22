@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-// 클래스 이름 변경: BionicReadingService -> FocusReadingService
 class FocusReadingService {
-  // '집중 읽기'가 적용된 RichText 위젯을 반환하는 static 메서드
   static RichText getBionicText(
       String text, {
         TextStyle? style,
         double fixationSaccadeRatio = 0.5,
         Color emphasisColor = Colors.red,
+        // ★★★ 여기가 추가된 부분입니다: 일반 텍스트 색상 파라미터 ★★★
+        Color normalTextColor = Colors.black,
       }) {
     final words = text.split(' ');
     List<TextSpan> textSpans = [];
@@ -47,8 +47,9 @@ class FocusReadingService {
         textSpans.add(
           TextSpan(
             text: normalPart,
+            // ★★★ 여기가 수정된 부분입니다: 하드코딩된 black 대신 파라미터 사용 ★★★
             style: defaultStyle.copyWith(
-                fontWeight: FontWeight.normal, color: Colors.black),
+                fontWeight: FontWeight.normal, color: normalTextColor),
           ),
         );
         textSpans.add(const TextSpan(text: ' '));

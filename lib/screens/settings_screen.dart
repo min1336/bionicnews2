@@ -3,6 +3,7 @@ import 'package:focus_news/screens/paywall_screen.dart';
 import 'package:focus_news/viewmodels/settings_viewmodel.dart';
 import 'package:focus_news/viewmodels/user_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -19,7 +20,13 @@ class SettingsScreen extends StatelessWidget {
     Colors.black,
   ];
 
-  // 프리미엄 기능 안내를 위한 SnackBar 표시 함수
+  static const List<String> _fontOptions = [
+    'Noto Sans KR',
+    'Nanum Gothic',
+    'Nanum Myeongjo',
+    'Gaegu',
+  ];
+
   void _showPremiumFeatureSnackBar(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -61,6 +68,8 @@ class SettingsScreen extends StatelessWidget {
               const Divider(height: 32),
               _buildThemeModeControl(context, settingsViewModel, isPremium),
               const Divider(height: 32),
+              _buildFontControl(context, settingsViewModel, isPremium),
+              const Divider(height: 32),
               _buildWpmControl(context, settingsViewModel, isPremium),
               const Divider(height: 32),
               _buildColorSelection(
@@ -82,9 +91,58 @@ class SettingsScreen extends StatelessWidget {
                     settingsViewModel.updateThemeColor(color),
                 isPremium: isPremium,
               ),
+              const Divider(height: 32),
+              // ★★★ 여기가 추가된 부분입니다 ★★★
+              _buildDeveloperMenu(context, userViewModel),
             ],
           );
         },
+      ),
+    );
+  }
+
+  // ★★★ 여기가 추가된 부분입니다: 개발자용 테스트 메뉴 위젯 ★★★
+  Widget _buildDeveloperMenu(BuildContext context, UserViewModel viewModel) {
+    return Card(
+      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.build_circle_outlined, size: 20),
+                const SizedBox(width: 8),
+                Text("개발자용 테스트 메뉴",
+                    style: Theme.of(context).textTheme.titleMedium),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '실제 결제 없이 프리미엄 상태를 테스트합니다.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => viewModel.upgradeToPremium(),
+                    child: const Text('프리미엄으로 변경'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => viewModel.revertToFree(),
+                    child: const Text('무료로 변경'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -124,13 +182,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
               )
             else
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: () => viewModel.revertToFree(),
-                  child: const Text('무료 버전으로 돌아가기 (테스트)'),
-                ),
-              )
+              const SizedBox.shrink(), // 프리미엄일때는 버튼 숨김
           ],
         ),
       ),
@@ -186,6 +238,42 @@ class SettingsScreen extends StatelessWidget {
               }
                   : null,
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFontControl(
+      BuildContext context, SettingsViewModel viewModel, bool isPremium) {
+    return GestureDetector(
+      onTap: isPremium ? null : () => _showPremiumFeatureSnackBar(context),
+      child: AbsorbPointer(
+        absorbing: !isPremium,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text("읽기 폰트", style: Theme.of(context).textTheme.titleLarge),
+                if (!isPremium) ...[
+                  const SizedBox(width: 8),
+                  Icon(Icons.lock, size: 18, color: Colors.grey.shade600)
+                ],
+              ],
+            ),
+            const SizedBox(height: 8),
+            for (String font in _fontOptions)
+              RadioListTile<String>(
+                title: Text(font, style: GoogleFonts.getFont(font)),
+                value: font,
+                groupValue: viewModel.fontFamily,
+                onChanged: isPremium
+                    ? (value) {
+                  if (value != null) viewModel.updateFontFamily(value);
+                }
+                    : null,
+              ),
           ],
         ),
       ),

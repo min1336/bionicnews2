@@ -5,8 +5,8 @@ class NewsArticle {
   final String author;
   final String description;
   final String urlToImage;
-  final String content; // This field holds the article URL
-  final String sourceName;
+  final String articleUrl;
+  final String originalLink;
   final String pubDate;
   bool isRead;
 
@@ -15,8 +15,8 @@ class NewsArticle {
     required this.author,
     required this.description,
     required this.urlToImage,
-    required this.content,
-    required this.sourceName,
+    required this.articleUrl,
+    required this.originalLink,
     required this.pubDate,
     this.isRead = false,
   });
@@ -31,27 +31,26 @@ class NewsArticle {
     }
   }
 
-  // ★★★ 여기가 추가된 부분입니다: 객체를 Map으로 변환 (JSON 인코딩용) ★★★
   Map<String, dynamic> toJson() => {
     'title': title,
     'author': author,
     'description': description,
     'urlToImage': urlToImage,
-    'content': content,
-    'sourceName': sourceName,
+    'articleUrl': articleUrl,
+    'originalLink': originalLink,
     'pubDate': pubDate,
     'isRead': isRead,
   };
 
-  // ★★★ 여기가 추가된 부분입니다: Map으로부터 객체 생성 (JSON 디코딩용) ★★★
+  // ★★★ 여기가 수정된 부분입니다: 모든 필드에 null-safety 추가 ★★★
   factory NewsArticle.fromJson(Map<String, dynamic> json) => NewsArticle(
-    title: json['title'],
-    author: json['author'],
-    description: json['description'],
-    urlToImage: json['urlToImage'],
-    content: json['content'],
-    sourceName: json['sourceName'],
-    pubDate: json['pubDate'],
+    title: json['title'] ?? '제목 없음',
+    author: json['author'] ?? '',
+    description: json['description'] ?? '내용 없음',
+    urlToImage: json['urlToImage'] ?? '',
+    articleUrl: json['articleUrl'] ?? '',
+    originalLink: json['originalLink'] ?? '',
+    pubDate: json['pubDate'] ?? '',
     isRead: json['isRead'] ?? false,
   );
 
@@ -67,8 +66,8 @@ class NewsArticle {
     return decodedString;
   }
 
-  // ★★★ 여기가 수정된 부분입니다: 기존 fromJson의 이름을 변경하여 역할 분리 ★★★
-  factory NewsArticle.fromNaverJson(Map<String, dynamic> json, {bool isRead = false}) {
+  factory NewsArticle.fromNaverJson(Map<String, dynamic> json,
+      {bool isRead = false}) {
     final cleanedTitle = _cleanHtmlString(json['title'] ?? '제목 없음');
     final cleanedDesc = _cleanHtmlString(json['description'] ?? '내용 없음');
 
@@ -77,8 +76,8 @@ class NewsArticle {
       author: '',
       description: cleanedDesc,
       urlToImage: '',
-      content: json['link'] ?? '',
-      sourceName: json['originallink'] ?? '',
+      articleUrl: json['link'] ?? '',
+      originalLink: json['originallink'] ?? '',
       pubDate: json['pubDate'] ?? '',
       isRead: isRead,
     );

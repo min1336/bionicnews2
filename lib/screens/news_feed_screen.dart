@@ -4,9 +4,11 @@ import 'package:focus_news/screens/edit_topics_screen.dart';
 import 'package:focus_news/screens/search_result_screen.dart';
 import 'package:focus_news/screens/settings_screen.dart';
 import 'package:focus_news/viewmodels/topic_viewmodel.dart';
+import 'package:focus_news/viewmodels/user_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
-import '../widgets/news_topic_list.dart';
+import 'package:focus_news/widgets/news_topic_list.dart';
 
 class NewsFeedScreen extends StatefulWidget {
   const NewsFeedScreen({super.key});
@@ -16,6 +18,76 @@ class NewsFeedScreen extends StatefulWidget {
 }
 
 class _NewsFeedScreenState extends State<NewsFeedScreen> {
+  BannerAd? _bannerAd;
+  bool _isAdLoaded = false;
+  bool _isAdLoading = false; // 광고 로딩 상태를 추적하는 플래그 추가
+  final String _adUnitId = 'ca-app-pub-3940256099942544/6300978111';
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final userViewModel = context.watch<UserViewModel>();
+
+    if (userViewModel.isPremium) {
+      if (_bannerAd != null) {
+        debugPrint("[Ad] 프리미엄 사용자로 전환됨. 배너 광고를 제거합니다.");
+        _bannerAd?.dispose();
+        _bannerAd = null;
+        if (mounted) {
+          setState(() {
+            _isAdLoaded = false;
+          });
+        }
+      }
+    } else {
+      // 무료 사용자이고, 광고가 로드되지 않았고, 로딩 중도 아닐 때만 로드 시작
+      if (!_isAdLoaded && !_isAdLoading) {
+        _loadBannerAd();
+      }
+    }
+  }
+
+  void _loadBannerAd() {
+    debugPrint("[Ad] 배너 광고 로드를 시작합니다.");
+    setState(() {
+      _isAdLoading = true;
+    });
+
+    _bannerAd?.dispose(); // 혹시 모를 이전 광고 객체 제거
+
+    _bannerAd = BannerAd(
+      adUnitId: _adUnitId,
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          debugPrint('[Ad] 배너 광고 로딩 성공: $ad');
+          if (mounted) {
+            setState(() {
+              _isAdLoaded = true;
+              _isAdLoading = false;
+            });
+          }
+        },
+        onAdFailedToLoad: (ad, err) {
+          debugPrint('[Ad] 배너 광고 로딩 실패: $err');
+          ad.dispose();
+          if (mounted) {
+            setState(() {
+              _isAdLoading = false;
+            });
+          }
+        },
+      ),
+    )..load();
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
+  }
+
   Future<void> _onSearchPressed() async {
     final String? result = await showSearch<String>(
       context: context,
@@ -49,7 +121,6 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
 
   AppBar _buildAppBar(BuildContext context, List<String> topics) {
     return AppBar(
-      // ★★★ 여기가 수정된 부분입니다: 앱 이름 변경 ★★★
       title: const Text('Focus News'),
       actions: [
         IconButton(
@@ -85,11 +156,20 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<TopicViewModel>(
-      builder: (context, topicViewModel, child) {
+    return Consumer2<TopicViewModel, UserViewModel>(
+      builder: (context, topicViewModel, userViewModel, child) {
         final userTopics = topicViewModel.userTopics;
 
-        if (userTopics.isEmpty) {
+        final adContainer = _isAdLoaded && _bannerAd != null
+            ? Container(
+          alignment: Alignment.center,
+          width: _bannerAd!.size.width.toDouble(),
+          height: _bannerAd!.size.height.toDouble(),
+          child: AdWidget(ad: _bannerAd!),
+        )
+            : null;
+
+        if (userTopics.isEmpty && !topicViewModel.isLoading) {
           return Scaffold(
             appBar: _buildAppBar(context, []),
             body: Center(
@@ -98,11 +178,29 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      '표시할 관심 주제가 없습니다.',
-                      style: TextStyle(fontSize: 18),
+                    const Icon(
+                      Icons.topic_outlined,
+                      size: 80,
+                      color: Colors.grey,
                     ),
                     const SizedBox(height: 16),
+                    Text(
+                      '관심 주제를 추가해보세요.',
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineSmall
+                          ?.copyWith(color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '설정에서 원하는 뉴스 주제를 추가하고\n나만의 뉴스 피드를 만들 수 있습니다.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyLarge
+                          ?.copyWith(color: Colors.grey.shade500),
+                    ),
+                    const SizedBox(height: 24),
                     ElevatedButton.icon(
                       icon: const Icon(Icons.edit),
                       label: const Text('관심 주제 편집하기'),
@@ -116,6 +214,7 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
                 ),
               ),
             ),
+            bottomNavigationBar: !userViewModel.isPremium ? adContainer : null,
           );
         }
 
@@ -123,7 +222,10 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
           length: userTopics.length,
           child: Scaffold(
             appBar: _buildAppBar(context, userTopics),
-            body: TabBarView(
+            body: topicViewModel.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : TabBarView(
+              key: ValueKey(userTopics.join()),
               children: userTopics.map((String topic) {
                 return NewsTopicList(
                   key: ValueKey(topic),
@@ -131,6 +233,7 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
                 );
               }).toList(),
             ),
+            bottomNavigationBar: !userViewModel.isPremium ? adContainer : null,
           ),
         );
       },

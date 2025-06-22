@@ -3,6 +3,7 @@ import 'package:focus_news/viewmodels/news_viewmodel.dart';
 import 'package:focus_news/widgets/news_card_skeleton.dart';
 import 'package:focus_news/widgets/reader_popup.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 class NewsListView extends StatefulWidget {
@@ -51,12 +52,10 @@ class _NewsListViewState extends State<NewsListView>
 
     return Consumer<NewsViewModel>(
       builder: (context, viewModel, child) {
-        // ★★★ 여기가 수정된 부분입니다 ★★★
-        // 최초 로딩 시, 스켈레톤 UI를 보여줍니다.
         if (viewModel.state == NotifierState.loading &&
             viewModel.articles.isEmpty) {
           return ListView.builder(
-            itemCount: 10, // 처음에 보여줄 스켈레톤 카드의 개수
+            itemCount: 10,
             itemBuilder: (context, index) => const NewsCardSkeleton(),
           );
         }
@@ -68,7 +67,34 @@ class _NewsListViewState extends State<NewsListView>
 
         if (viewModel.articles.isEmpty &&
             viewModel.state == NotifierState.loaded) {
-          return const Center(child: Text('뉴스가 없습니다.'));
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.article_outlined,
+                  size: 80,
+                  color: Colors.grey.shade400,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '뉴스가 없습니다.',
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall
+                      ?.copyWith(color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '다른 주제를 선택하거나 검색어를 변경해보세요.',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyLarge
+                      ?.copyWith(color: Colors.grey.shade500),
+                )
+              ],
+            ),
+          );
         }
 
         return RefreshIndicator(
@@ -114,7 +140,7 @@ class _NewsListViewState extends State<NewsListView>
                   ),
                   onTap: () {
                     viewModel.markArticleAsRead(article);
-                    _readArticleService.addReadArticle(article.content);
+                    _readArticleService.addReadArticle(article.articleUrl);
 
                     showDialog(
                       context: context,
@@ -124,7 +150,10 @@ class _NewsListViewState extends State<NewsListView>
                     );
                   },
                 ),
-              );
+              )
+                  .animate()
+                  .fadeIn(duration: 500.ms, curve: Curves.easeIn)
+                  .slideY(begin: 0.2, duration: 400.ms, curve: Curves.easeInOut);
             },
           ),
         );

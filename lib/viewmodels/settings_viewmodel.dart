@@ -8,16 +8,16 @@ class SettingsViewModel extends ChangeNotifier {
   double _saccadeRatio = 0.5;
   Color _emphasisColor = Colors.red;
   Color _themeColor = Colors.blueGrey;
-  // ★★★ 여기가 추가된 부분입니다 ★★★
   ThemeMode _themeMode = ThemeMode.system;
+  String _fontFamily = 'Noto Sans KR';
   bool _isLoading = true;
 
   int get wpm => _wpm;
   double get saccadeRatio => _saccadeRatio;
   Color get emphasisColor => _emphasisColor;
   Color get themeColor => _themeColor;
-  // ★★★ 여기가 추가된 부분입니다 ★★★
   ThemeMode get themeMode => _themeMode;
+  String get fontFamily => _fontFamily;
   bool get isLoading => _isLoading;
 
   SettingsViewModel() {
@@ -32,12 +32,12 @@ class SettingsViewModel extends ChangeNotifier {
     _saccadeRatio = await _settingsService.getSaccadeRatio();
     _emphasisColor = await _settingsService.getEmphasisColor();
     _themeColor = await _settingsService.getThemeColor();
-    // ★★★ 여기가 추가된 부분입니다 ★★★
     final themeModeName = await _settingsService.getThemeMode();
     _themeMode = ThemeMode.values.firstWhere(
           (e) => e.name == themeModeName,
       orElse: () => ThemeMode.system,
     );
+    _fontFamily = await _settingsService.getFontFamily();
 
     _isLoading = false;
     notifyListeners();
@@ -67,10 +67,15 @@ class SettingsViewModel extends ChangeNotifier {
     await _settingsService.saveThemeColor(_themeColor);
   }
 
-  // ★★★ 여기가 추가된 부분입니다 ★★★
   Future<void> updateThemeMode(ThemeMode newThemeMode) async {
     _themeMode = newThemeMode;
     notifyListeners();
     await _settingsService.saveThemeMode(newThemeMode.name);
+  }
+
+  Future<void> updateFontFamily(String newFontFamily) async {
+    _fontFamily = newFontFamily;
+    notifyListeners();
+    await _settingsService.saveFontFamily(newFontFamily);
   }
 }

@@ -1,26 +1,31 @@
 name: focus_news
-description: "A new Flutter project."
+description: "A news reader app with a special focus reading mode."
 publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: '>=3.5.0-153.0.dev <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
 
   shimmer: ^3.0.0
+  flutter_animate: ^4.5.0
+  in_app_review: ^2.0.9
+
+  cupertino_icons: ^1.0.6
   http: ^1.2.1
   html: ^0.15.4
-  flutter_dotenv: ^5.1.0
   provider: ^6.1.2
-  intl: ^0.19.0
-  url_launcher: ^6.2.6 # ★★★ MODIFIED: 원본 기사 열기를 위해 사용합니다.
   shared_preferences: ^2.2.3
-  cupertino_icons: ^1.0.8
-  google_fonts: ^6.2.1
+  flutter_dotenv: ^5.1.0
+  intl: ^0.19.0
+  url_launcher: ^6.3.0
   flutter_colorpicker: ^1.1.0
+  google_fonts: ^6.2.1
+  google_mobile_ads: ^5.1.0
+  in_app_purchase: ^3.2.0
 
 dev_dependencies:
   flutter_test:

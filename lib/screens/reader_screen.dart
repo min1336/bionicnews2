@@ -1,11 +1,13 @@
+import 'package:focus_news/main.dart';
 import 'package:focus_news/models/news_article.dart';
 import 'package:focus_news/screens/paywall_screen.dart';
-import 'package:focus_news/services/focus_reading_service.dart'; // 수정된 import
+import 'package:focus_news/services/focus_reading_service.dart';
 import 'package:focus_news/viewmodels/bookmark_viewmodel.dart';
 import 'package:focus_news/viewmodels/reader_viewmodel.dart';
 import 'package:focus_news/viewmodels/settings_viewmodel.dart';
 import 'package:focus_news/viewmodels/user_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -54,20 +56,22 @@ class ReaderScreen extends StatelessWidget {
 
     return ChangeNotifierProvider(
       create: (_) => ReaderViewModel(
-        articleUrl: article.content,
+        articleUrl: article.articleUrl,
         initialWpm: settingsViewModel.wpm,
         initialSaccadeRatio: settingsViewModel.saccadeRatio,
         initialEmphasisColor: settingsViewModel.emphasisColor,
         onWpmChanged: (newWpm) => settingsViewModel.updateWpm(newWpm),
         onSaccadeRatioChanged: (newRatio) =>
             settingsViewModel.updateSaccadeRatio(newRatio),
+        isPremiumUser: userViewModel.isPremium,
+        adService: adService,
       ),
       child: Consumer<ReaderViewModel>(
         builder: (context, viewModel, child) {
           return Scaffold(
             appBar: AppBar(
-              title:
-              Text(article.sourceName, style: const TextStyle(fontSize: 16)),
+              title: Text(article.originalLink,
+                  style: const TextStyle(fontSize: 16)),
               actions: [
                 IconButton(
                   icon: Icon(
@@ -93,14 +97,14 @@ class ReaderScreen extends StatelessWidget {
                   icon: const Icon(Icons.open_in_browser),
                   tooltip: '원본 기사 보기',
                   onPressed: () async {
-                    final url = Uri.parse(article.content);
+                    final url = Uri.parse(article.articleUrl);
                     if (await canLaunchUrl(url)) {
                       await launchUrl(url,
                           mode: LaunchMode.externalApplication);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                            content: Text('브라우저를 열 수 없습니다: ${article.content}')),
+                            content: Text('브라우저를 열 수 없습니다: ${article.articleUrl}')),
                       );
                     }
                   },
@@ -139,21 +143,36 @@ class ReaderScreen extends StatelessWidget {
       );
     }
 
+    final brightness = Theme.of(context).brightness;
+    final normalTextColor =
+    brightness == Brightness.dark ? Colors.white : Colors.black;
+
+    final settingsViewModel = context.read<SettingsViewModel>();
+    final textStyle = GoogleFonts.getFont(
+      settingsViewModel.fontFamily,
+      fontSize: 36,
+    );
+    final titleTextStyle = GoogleFonts.getFont(
+      settingsViewModel.fontFamily,
+      fontSize: 22,
+      fontWeight: FontWeight.bold,
+    );
+
     return Column(
       children: [
         Text(
           article.title,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          style: titleTextStyle,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
         Expanded(
           child: Center(
-            // ★★★ 여기가 수정된 부분입니다: 클래스 이름 변경 ★★★
             child: FocusReadingService.getBionicText(
               viewModel.currentWord,
-              style: const TextStyle(fontSize: 36),
+              style: textStyle,
               emphasisColor: viewModel.emphasisColor,
+              normalTextColor: normalTextColor,
             ),
           ),
         ),
@@ -208,7 +227,7 @@ class ReaderScreen extends StatelessWidget {
                   ? null
                   : () {
                 if (viewModel.isFinished) {
-                  viewModel.loadArticleContent(article.content,
+                  viewModel.loadArticleContent(article.articleUrl,
                       isRestart: true);
                 } else {
                   viewModel.togglePlayPause();

@@ -1,13 +1,25 @@
+import 'package:focus_news/services/ad_service.dart';
+import 'package:focus_news/services/iap_service.dart';
 import 'package:focus_news/viewmodels/bookmark_viewmodel.dart';
 import 'package:focus_news/viewmodels/settings_viewmodel.dart';
 import 'package:focus_news/viewmodels/topic_viewmodel.dart';
 import 'package:focus_news/viewmodels/user_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
-import 'screens/news_feed_screen.dart';
+import 'package:focus_news/screens/news_feed_screen.dart';
+
+final AdService adService = AdService();
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  MobileAds.instance.initialize();
+
+  IapService().initialize();
+
+  adService.createAndLoadInterstitialAd();
+
   await dotenv.load(fileName: ".env");
   runApp(
     MultiProvider(
@@ -30,7 +42,6 @@ class MyApp extends StatelessWidget {
     return Consumer<SettingsViewModel>(
       builder: (context, settings, child) {
         return MaterialApp(
-          // ★★★ 여기가 수정된 부분입니다: 앱 이름 변경 ★★★
           title: 'Focus News',
           theme: ThemeData(
             useMaterial3: true,

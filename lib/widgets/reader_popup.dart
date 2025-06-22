@@ -1,14 +1,15 @@
+import 'package:focus_news/main.dart';
 import 'package:focus_news/models/news_article.dart';
 import 'package:focus_news/screens/paywall_screen.dart';
-import 'package:focus_news/services/focus_reading_service.dart'; // 수정된 import
+import 'package:focus_news/services/focus_reading_service.dart';
 import 'package:focus_news/viewmodels/bookmark_viewmodel.dart';
 import 'package:focus_news/viewmodels/reader_viewmodel.dart';
 import 'package:focus_news/viewmodels/settings_viewmodel.dart';
 import 'package:focus_news/viewmodels/user_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-// 클래스 이름 변경: BionicReadingPopup -> ReaderPopup
 class ReaderPopup extends StatelessWidget {
   final NewsArticle article;
 
@@ -51,16 +52,27 @@ class ReaderPopup extends StatelessWidget {
 
     return ChangeNotifierProvider(
       create: (_) => ReaderViewModel(
-        articleUrl: article.content,
+        articleUrl: article.articleUrl,
         initialWpm: settingsViewModel.wpm,
         initialSaccadeRatio: settingsViewModel.saccadeRatio,
         initialEmphasisColor: settingsViewModel.emphasisColor,
         onWpmChanged: (newWpm) => settingsViewModel.updateWpm(newWpm),
         onSaccadeRatioChanged: (newRatio) =>
             settingsViewModel.updateSaccadeRatio(newRatio),
+        isPremiumUser: userViewModel.isPremium,
+        adService: adService,
       ),
       child: Consumer<ReaderViewModel>(
         builder: (context, viewModel, child) {
+          final brightness = Theme.of(context).brightness;
+          final normalTextColor =
+          brightness == Brightness.dark ? Colors.white : Colors.black;
+
+          final textStyle = GoogleFonts.getFont(
+            settingsViewModel.fontFamily,
+            fontSize: 28,
+          );
+
           return AlertDialog(
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -110,11 +122,11 @@ class ReaderPopup extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Center(
-                      // ★★★ 여기가 수정된 부분입니다: 클래스 이름 변경 ★★★
                       child: FocusReadingService.getBionicText(
                         viewModel.currentWord,
-                        style: const TextStyle(fontSize: 28),
+                        style: textStyle,
                         emphasisColor: viewModel.emphasisColor,
+                        normalTextColor: normalTextColor,
                       ),
                     ),
                   ),
@@ -146,7 +158,7 @@ class ReaderPopup extends StatelessWidget {
                     ? null
                     : () {
                   if (viewModel.isFinished) {
-                    viewModel.loadArticleContent(article.content,
+                    viewModel.loadArticleContent(article.articleUrl,
                         isRestart: true);
                   } else {
                     viewModel.togglePlayPause();

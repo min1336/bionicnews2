@@ -1,17 +1,19 @@
 import 'dart:async';
+import 'package:focus_news/main.dart';
 import 'package:focus_news/services/news_scraper_service.dart';
 import 'package:flutter/material.dart';
+import 'package:focus_news/services/ad_service.dart';
 
 class ReaderViewModel extends ChangeNotifier {
   final _scraperService = NewsScraperService();
+  final AdService adService;
 
-  // State
   List<String> _words = [];
   int _currentIndex = 0;
   bool _isPlaying = true;
-  late int _wpm; // late로 변경
-  late double _saccadeRatio; // late로 변경
-  late Color _emphasisColor; // emphasisColor 상태 추가
+  late int _wpm;
+  late double _saccadeRatio;
+  late Color _emphasisColor;
   bool _isFinished = false;
   bool _isLoading = true;
   String _articleContent = '';
@@ -19,11 +21,10 @@ class ReaderViewModel extends ChangeNotifier {
 
   Timer? _timer;
 
-  // ★★★ 여기가 수정된 부분입니다: 설정 변경을 저장하기 위한 콜백 함수 ★★★
   final Function(int) onWpmChanged;
   final Function(double) onSaccadeRatioChanged;
+  final bool isPremiumUser;
 
-  // Getters for UI
   bool get isLoading => _isLoading;
   bool get isPlaying => _isPlaying;
   bool get isFinished => _isFinished;
@@ -38,7 +39,6 @@ class ReaderViewModel extends ChangeNotifier {
   Color get emphasisColor => _emphasisColor;
   String get errorMessage => _errorMessage;
 
-  // ★★★ 여기가 수정된 부분입니다: 생성자에서 초기 설정값과 콜백을 받도록 변경 ★★★
   ReaderViewModel({
     required String articleUrl,
     required int initialWpm,
@@ -46,6 +46,8 @@ class ReaderViewModel extends ChangeNotifier {
     required Color initialEmphasisColor,
     required this.onWpmChanged,
     required this.onSaccadeRatioChanged,
+    required this.isPremiumUser,
+    required this.adService,
   }) {
     _wpm = initialWpm;
     _saccadeRatio = initialSaccadeRatio;
@@ -129,10 +131,9 @@ class ReaderViewModel extends ChangeNotifier {
   }
 
   void changeSpeed(int amount) {
-    // ★★★ 여기가 수정된 부분입니다: 콜백 함수 호출 추가 ★★★
     final newWpm = (_wpm + amount).clamp(100, 1200);
     _wpm = newWpm;
-    onWpmChanged(_wpm); // 전역 설정값 업데이트
+    onWpmChanged(_wpm);
 
     if (_isPlaying) {
       _startTimer();
@@ -141,15 +142,15 @@ class ReaderViewModel extends ChangeNotifier {
   }
 
   void changeSaccadeRatio(double newRatio) {
-    // ★★★ 여기가 수정된 부분입니다: 콜백 함수 호출 추가 ★★★
     _saccadeRatio = newRatio.clamp(0.2, 0.8);
-    onSaccadeRatioChanged(_saccadeRatio); // 전역 설정값 업데이트
+    onSaccadeRatioChanged(_saccadeRatio);
     notifyListeners();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    adService.showInterstitialAdIfNeeded(isPremium: isPremiumUser);
     super.dispose();
   }
 }

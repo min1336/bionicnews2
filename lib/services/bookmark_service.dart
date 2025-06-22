@@ -23,8 +23,7 @@ class BookmarkService {
 
   Future<void> addBookmark(NewsArticle article) async {
     final List<NewsArticle> bookmarks = await getBookmarks();
-    // 중복 추가 방지 (기사 링크를 고유 ID로 사용)
-    if (!bookmarks.any((item) => item.content == article.content)) {
+    if (!bookmarks.any((item) => item.articleUrl == article.articleUrl)) {
       bookmarks.add(article);
       await _saveBookmarks(bookmarks);
     }
@@ -32,7 +31,7 @@ class BookmarkService {
 
   Future<void> removeBookmark(NewsArticle article) async {
     List<NewsArticle> bookmarks = await getBookmarks();
-    bookmarks.removeWhere((item) => item.content == article.content);
+    bookmarks.removeWhere((item) => item.articleUrl == article.articleUrl);
     await _saveBookmarks(bookmarks);
   }
 }

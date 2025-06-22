@@ -6,8 +6,8 @@ class SettingsService {
   static const _ratioKey = 'settings_saccade_ratio';
   static const _emphasisColorKey = 'settings_emphasis_color';
   static const _themeColorKey = 'settings_theme_color';
-  // ★★★ 여기가 추가된 부분입니다 ★★★
   static const _themeModeKey = 'settings_theme_mode';
+  static const _fontFamilyKey = 'settings_font_family';
 
   Future<void> saveWpm(int wpm) async {
     final prefs = await SharedPreferences.getInstance();
@@ -51,7 +51,6 @@ class SettingsService {
     return value != null ? Color(value) : Colors.blueGrey;
   }
 
-  // ★★★ 여기가 추가된 부분입니다 ★★★
   Future<void> saveThemeMode(String themeModeName) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_themeModeKey, themeModeName);
@@ -59,7 +58,16 @@ class SettingsService {
 
   Future<String> getThemeMode() async {
     final prefs = await SharedPreferences.getInstance();
-    // 기본값 'system'
     return prefs.getString(_themeModeKey) ?? 'system';
+  }
+
+  Future<void> saveFontFamily(String fontFamily) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_fontFamilyKey, fontFamily);
+  }
+
+  Future<String> getFontFamily() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_fontFamilyKey) ?? 'Noto Sans KR';
   }
 }
