@@ -6,6 +6,7 @@ import 'package:focus_news/viewmodels/bookmark_viewmodel.dart';
 import 'package:focus_news/viewmodels/reader_viewmodel.dart';
 import 'package:focus_news/viewmodels/settings_viewmodel.dart';
 import 'package:focus_news/viewmodels/user_viewmodel.dart';
+import 'package:focus_news/widgets/reader_progress_control.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -131,13 +132,8 @@ class ReaderPopup extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  LinearProgressIndicator(
-                    value: viewModel.progress,
-                    backgroundColor: Colors.grey.shade300,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  Text(
-                      '${viewModel.wordCount == 0 ? 0 : viewModel.currentWordIndex} / ${viewModel.wordCount}'),
+                  // ★★★ 여기가 수정된 부분입니다 ★★★
+                  ReaderProgressControl(viewModel: viewModel),
                 ],
               ),
             ),

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:focus_news/main.dart';
 import 'package:focus_news/services/news_scraper_service.dart';
 import 'package:flutter/material.dart';
 import 'package:focus_news/services/ad_service.dart';
@@ -127,6 +126,16 @@ class ReaderViewModel extends ChangeNotifier {
     } else {
       _timer?.cancel();
     }
+    notifyListeners();
+  }
+
+  // ★★★ 여기가 추가된 부분입니다: 슬라이더로 위치를 변경하는 함수 ★★★
+  void scrubToWord(int index) {
+    // 재생 중이 아닐 때만 위치 변경 가능
+    if (_isPlaying || _isLoading || _words.isEmpty) return;
+
+    // 인덱스 범위를 안전하게 제한
+    _currentIndex = index.clamp(0, _words.length - 1);
     notifyListeners();
   }
 

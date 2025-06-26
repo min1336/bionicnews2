@@ -1,4 +1,3 @@
-import 'package:focus_news/models/news_article.dart';
 import 'package:focus_news/screens/reader_screen.dart';
 import 'package:focus_news/viewmodels/bookmark_viewmodel.dart';
 import 'package:focus_news/widgets/error_display_widget.dart';

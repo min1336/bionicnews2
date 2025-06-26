@@ -225,7 +225,7 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
             body: topicViewModel.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : TabBarView(
-              key: ValueKey(userTopics.join()),
+              // ★★★ 여기가 수정된 부분입니다: 불필요한 key 제거 ★★★
               children: userTopics.map((String topic) {
                 return NewsTopicList(
                   key: ValueKey(topic),
@@ -233,7 +233,6 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
                 );
               }).toList(),
             ),
-            bottomNavigationBar: !userViewModel.isPremium ? adContainer : null,
           ),
         );
       },

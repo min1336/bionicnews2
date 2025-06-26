@@ -1,4 +1,10 @@
+import 'package:focus_news/services/bookmark_service.dart';
+import 'package:focus_news/services/purchase_service.dart';
+import 'package:focus_news/services/read_article_service.dart';
+import 'package:focus_news/services/review_service.dart';
+import 'package:focus_news/services/search_history_service.dart';
 import 'package:focus_news/services/settings_service.dart';
+import 'package:focus_news/services/topic_service.dart';
 import 'package:flutter/material.dart';
 
 class SettingsViewModel extends ChangeNotifier {
@@ -77,5 +83,18 @@ class SettingsViewModel extends ChangeNotifier {
     _fontFamily = newFontFamily;
     notifyListeners();
     await _settingsService.saveFontFamily(newFontFamily);
+  }
+
+  Future<void> resetAllApplicationData() async {
+    await _settingsService.resetAllSettings();
+    await BookmarkService().clearBookmarks();
+    await ReadArticleService().clearReadArticles();
+    await ReviewService().resetReviewRequest();
+    await SearchHistoryService().clearSearchHistory();
+    await TopicService().clearUserTopics();
+    await PurchaseService().clearPremiumStatus();
+
+    // 설정값을 다시 불러와서 UI에 즉시 반영
+    await _loadSettings();
   }
 }

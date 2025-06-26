@@ -70,4 +70,15 @@ class SettingsService {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_fontFamilyKey) ?? 'Noto Sans KR';
   }
+
+  // ★★★ 여기가 추가된 부분입니다 ★★★
+  Future<void> resetAllSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_wpmKey);
+    await prefs.remove(_ratioKey);
+    await prefs.remove(_emphasisColorKey);
+    await prefs.remove(_themeColorKey);
+    await prefs.remove(_themeModeKey);
+    await prefs.remove(_fontFamilyKey);
+  }
 }

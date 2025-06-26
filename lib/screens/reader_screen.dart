@@ -6,6 +6,7 @@ import 'package:focus_news/viewmodels/bookmark_viewmodel.dart';
 import 'package:focus_news/viewmodels/reader_viewmodel.dart';
 import 'package:focus_news/viewmodels/settings_viewmodel.dart';
 import 'package:focus_news/viewmodels/user_viewmodel.dart';
+import 'package:focus_news/widgets/reader_progress_control.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -177,21 +178,8 @@ class ReaderScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        Column(
-          children: [
-            LinearProgressIndicator(
-              value: viewModel.progress,
-              backgroundColor: Colors.grey.shade300,
-              color: Theme.of(context).colorScheme.primary,
-              minHeight: 6,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${viewModel.currentWordIndex} / ${viewModel.wordCount}',
-              style: TextStyle(color: Colors.grey.shade700),
-            ),
-          ],
-        ),
+        // ★★★ 여기가 수정된 부분입니다 ★★★
+        ReaderProgressControl(viewModel: viewModel),
       ],
     );
   }

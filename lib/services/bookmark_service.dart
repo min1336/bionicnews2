@@ -34,4 +34,10 @@ class BookmarkService {
     bookmarks.removeWhere((item) => item.articleUrl == article.articleUrl);
     await _saveBookmarks(bookmarks);
   }
+
+  // ★★★ 여기가 추가된 부분입니다 ★★★
+  Future<void> clearBookmarks() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_bookmarkKey);
+  }
 }
